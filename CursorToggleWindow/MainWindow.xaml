@@ -8,7 +8,7 @@
         Title="CursorToggleWindow「代码见三」" Height="450" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid>
         <Menu>
-            <MenuItem x:Name="OpenAboutWindow" Header="关于" Click="OpenAboutWindow_Click" Height="20"></MenuItem>
+            <MenuItem x:Name="OpenAboutWindowMenuItem" Header="关于" Click="OpenAboutWindowMenuItem_Click" Height="20"></MenuItem>
         </Menu>
         <ListView x:Name="WindowInfoListView" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="0,20,0,125" SelectionMode="Single">
             <ListView.View>

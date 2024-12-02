@@ -21,19 +21,27 @@ namespace CursorToggleWindow
         private const uint SW_SHOWMINIMIZED = 2;
         private const int WM_MOUSEMOVE = 0x0200;
 
-        private IntPtr Handle = IntPtr.Zero;
+        private IntPtr Handle = IntPtr.Zero; // MainWindow的句柄
         private SortDescription _sortDescriptionByVisible;
         private SortDescription _sortDescriptionByName;
-        private TargetWindowInfo? _targetWindow = null;
-        private IntPtr _hookId = IntPtr.Zero;
-        private bool _isHook = false;
-        private readonly object _targetWindowLock = new object();
+        private TargetWindowInfo? _targetWindow = null; // 需要隐藏的目标窗口信息
+        private IntPtr _hookId = IntPtr.Zero; // 鼠标钩子id
+        private bool _isHook = false; // 是否安装鼠标钩子
+        private readonly object _targetWindowLock = new();
 
         public MainWindow()
         {
             InitializeComponent();
             _sortDescriptionByVisible = new SortDescription("Visible", ListSortDirection.Descending);
             _sortDescriptionByName = new SortDescription("Name", ListSortDirection.Ascending);
+        }
+        private void RefreshWindowsInfoListViewButton_Click(object sender, RoutedEventArgs e) => RefreshWindowListView();
+        private void RefreshWindowListView()
+        {
+            WindowInfoListView.Items.Clear();
+            _ = EnumWindows(EnumWindowsProc, IntPtr.Zero);
+            WindowInfoListView.Items.SortDescriptions.Add(_sortDescriptionByVisible);
+            WindowInfoListView.Items.SortDescriptions.Add(_sortDescriptionByName);
         }
         private bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam)
         {
@@ -72,143 +80,6 @@ namespace CursorToggleWindow
             //}
             WindowInfoListView.Items.Add(new WindowInfo { HWND = hwnd, Name = Title, Visible = visible, FilePath = "", Pid = 0, VisibleText = visibleText });
             return true;
-        }
-        private void RefreshWindowListView()
-        {
-            WindowInfoListView.Items.Clear();
-            _ = EnumWindows(EnumWindowsProc, IntPtr.Zero);
-            WindowInfoListView.Items.SortDescriptions.Add(_sortDescriptionByVisible);
-            WindowInfoListView.Items.SortDescriptions.Add(_sortDescriptionByName);
-        }
-        private void RefreshWindowsInfoListViewButton_Click(object sender, RoutedEventArgs e) => RefreshWindowListView();
-
-        private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
-            Handle = new WindowInteropHelper(this).Handle;
-            RefreshWindowListView();
-            HotkeyWindowToggler mainWindowHotkey = new(Handle, 0xBFFF, MOD_ALT, (uint)KeyInterop.VirtualKeyFromKey(Key.P));
-            mainWindowHotkey.HWNDList.Add(Handle);
-            mainWindowHotkey.Register();
-        }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            MessageBoxResult result = MessageBox.Show("退出后将无法隐藏目标窗口！\n可以通过 Alt + P 隐藏本程序\n          是否退出？", "是否退出？", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            // 如果用户选择“否”，则取消关闭操作
-            if (result == MessageBoxResult.No)
-            {
-                e.Cancel = true;
-            }
-            // 退出
-            if (_hookId != IntPtr.Zero)
-            {
-                UnhookWindowsHookEx(_hookId);
-            }
-        }
-
-        private void OpenAboutWindow_Click(object sender, RoutedEventArgs e)
-        {
-            AboutWindow w = new()
-            {
-                Owner = this
-            };
-            w.Show();
-        }
-
-        private void ShowSingleWindowButton_Click(object sender, RoutedEventArgs e)
-        {
-            nint HWND;
-            try
-            {
-                HWND = nint.Parse(ShowSingleWindowTextBox.Text);
-            }
-            catch (System.FormatException)
-            {
-                MessageBox.Show("请输入句柄的数字！");
-                return;
-            }
-            if (!IsWindow(HWND))
-            {
-                MessageBox.Show("句柄无效，请检查");
-                return;
-            }
-            ShowWindow(HWND, SW_SHOWMINIMIZED);
-            ShowWindow(HWND, SW_SHOWNORMAL);
-        }
-
-        class TargetWindowInfo
-        {
-            public IntPtr HWND { get; set; }
-            public bool Visible { get; set; } = true;
-            public int Left { get; set; }
-            public int Top { get; set; }
-            public int Right { get; set; }
-            public int Bottom { get; set; }
-        }
-
-        class WindowInfo
-        {
-            public bool Visible { set; get; }
-            public string VisibleText { set; get; } = string.Empty;
-            public string Name { set; get; } = string.Empty;
-            public IntPtr HWND { set; get; }
-            public IntPtr Pid { set; get; }
-            public string FilePath { set; get; } = string.Empty;
-        }
-        private bool SetHook()
-        {
-            using Process curProcess = Process.GetCurrentProcess();
-            using ProcessModule curModule = curProcess.MainModule;
-            _hookId = SetWindowsHookEx(WH_MOUSE_LL, HookCallback, GetModuleHandle(curModule.ModuleName), 0);
-            if (_hookId == IntPtr.Zero)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
-        }
-
-        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
-        {
-            try
-            {
-                lock (_targetWindowLock)
-                { 
-                    if (_targetWindow != null && nCode >= 0)
-                    {
-                        int msg = wParam.ToInt32();
-                        switch (msg)
-                        {
-                            case WM_MOUSEMOVE:
-                                var ms = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
-                                int x = ms.pt.x;
-                                int y = ms.pt.y;
-                                // 光标在窗口中
-                                bool isInWindow = x >= _targetWindow.Left && x <= _targetWindow.Right && y <= _targetWindow.Bottom && y >= _targetWindow.Top;
-                                if (isInWindow && !_targetWindow.Visible)
-                                {
-                                    _targetWindow.Visible = true;
-                                    //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
-                                    ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
-                                }
-                                else if (!isInWindow && _targetWindow.Visible)
-                                {
-                                    _targetWindow.Visible = false;
-                                    ShowWindow(_targetWindow.HWND, SW_HIDE);
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"@@@@@@@{ex.Message}");
-            }
-            return CallNextHookEx(_hookId, nCode, wParam, lParam);
         }
 
         private void StartHookButton_Click(object sender, RoutedEventArgs e)
@@ -259,6 +130,116 @@ namespace CursorToggleWindow
             TargetWindowTextBlock.Text = "";
         }
 
+        private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
+        {
+            try
+            {
+                lock (_targetWindowLock)
+                {
+                    if (_targetWindow != null && nCode >= 0)
+                    {
+                        int msg = wParam.ToInt32();
+                        switch (msg)
+                        {
+                            case WM_MOUSEMOVE:
+                                var ms = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                                int x = ms.pt.x;
+                                int y = ms.pt.y;
+                                // 光标在窗口中
+                                bool isInWindow = x >= _targetWindow.Left && x <= _targetWindow.Right && y <= _targetWindow.Bottom && y >= _targetWindow.Top;
+                                if (isInWindow && !_targetWindow.Visible)
+                                {
+                                    _targetWindow.Visible = true;
+                                    //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
+                                    ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
+                                }
+                                else if (!isInWindow && _targetWindow.Visible)
+                                {
+                                    _targetWindow.Visible = false;
+                                    ShowWindow(_targetWindow.HWND, SW_HIDE);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"@@@@@@@{ex.Message}");
+            }
+            return CallNextHookEx(_hookId, nCode, wParam, lParam);
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            Handle = new WindowInteropHelper(this).Handle; // 获取MainWindow句柄
+            RefreshWindowListView();
+            // 创建快捷键 Alt + P 隐藏/显示 MainWindow
+            HotkeyWindowToggler mainWindowHotkey = new(Handle, 0xBFFF, MOD_ALT, (uint)KeyInterop.VirtualKeyFromKey(Key.P));
+            mainWindowHotkey.HWNDList.Add(Handle);
+            mainWindowHotkey.Register();
+        }
+
+        private void Window_Closing(object sender, CancelEventArgs e)
+        {
+            MessageBoxResult result = MessageBox.Show("退出后将无法隐藏目标窗口！\n可以通过 Alt + P 隐藏本程序\n          是否退出？", "是否退出？", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            // 如果用户选择“否”，则取消关闭操作
+            if (result == MessageBoxResult.No)
+            {
+                e.Cancel = true;
+            }
+            // 退出
+            if (_hookId != IntPtr.Zero)
+            {
+                UnhookWindowsHookEx(_hookId);
+            }
+        }
+
+        private void OpenAboutWindowMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            AboutWindow w = new()
+            {
+                Owner = this
+            };
+            w.Show();
+        }
+
+        private void ShowSingleWindowButton_Click(object sender, RoutedEventArgs e)
+        {
+            nint HWND;
+            try
+            {
+                HWND = nint.Parse(ShowSingleWindowTextBox.Text);
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("请输入句柄的数字！");
+                return;
+            }
+            if (!IsWindow(HWND))
+            {
+                MessageBox.Show("句柄无效，请检查");
+                return;
+            }
+            ShowWindow(HWND, SW_SHOWMINIMIZED);
+            ShowWindow(HWND, SW_SHOWNORMAL);
+        }
+        private bool SetHook()
+        {
+            using Process curProcess = Process.GetCurrentProcess();
+            using ProcessModule curModule = curProcess.MainModule;
+            _hookId = SetWindowsHookEx(WH_MOUSE_LL, HookCallback, GetModuleHandle(curModule.ModuleName), 0);
+            if (_hookId == IntPtr.Zero)
+            {
+                return false;
+            }
+            else
+            {
+                return true;
+            }
+        }
+
         private void ShowTargetWindowButton_Click(object sender, RoutedEventArgs e)
         {
             if (_targetWindow != null)
@@ -266,6 +247,30 @@ namespace CursorToggleWindow
                 ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
                 ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
             }
+        }
+        /// <summary>
+        /// 需要隐藏的窗口信息
+        /// </summary>
+        class TargetWindowInfo
+        {
+            public IntPtr HWND { get; set; }
+            public bool Visible { get; set; } = true;
+            public int Left { get; set; }
+            public int Top { get; set; }
+            public int Right { get; set; }
+            public int Bottom { get; set; }
+        }
+        /// <summary>
+        /// 窗口中列表显示的窗口信息
+        /// </summary>
+        class WindowInfo
+        {
+            public bool Visible { set; get; }
+            public string VisibleText { set; get; } = string.Empty;
+            public string Name { set; get; } = string.Empty;
+            public IntPtr HWND { set; get; }
+            public IntPtr Pid { set; get; }
+            public string FilePath { set; get; } = string.Empty;
         }
     }
 }
