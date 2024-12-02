@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CursorToggleWindow"
         mc:Ignorable="d"
-        Title="CursorToggleWindow「代码见三」" Height="450" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="CursorToggleWindow「代码见三」" Height="450" Width="550" Loaded="Window_Loaded" Closing="Window_Closing">
     <Grid>
         <Menu>
             <MenuItem x:Name="OpenAboutWindowMenuItem" Header="关于" Click="OpenAboutWindowMenuItem_Click" Height="20"></MenuItem>
         </Menu>
-        <ListView x:Name="WindowInfoListView" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="0,20,0,125" SelectionMode="Single">
+        <ListView x:Name="WindowInfoListView" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="0,20,0,95" SelectionMode="Single">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="可视" Width="30" DisplayMemberBinding="{Binding VisibleText}"/>
@@ -18,28 +18,31 @@
                     <GridViewColumn Header="窗口名" Width="360" DisplayMemberBinding="{Binding Name}"/>
                 </GridView>
             </ListView.View>
-            <ListView.ItemContainerStyle>
+            <!--<ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                     <Setter Property="ToolTipService.ToolTip">
                         <Setter.Value>
-                            <TextBlock Text="{Binding FilePath}">
+                            <TextBlock Text="{Binding FilePath}">-->
                         <!--<Run Text="{Binding Pid, StringFormat={}Pid:{0}}" />
                         <Run Text=" " />
                         <Run Text="{Binding FilePath}" />-->
-                            </TextBlock>
+                            <!--</TextBlock>
                         </Setter.Value>
                     </Setter>
                 </Style>
-            </ListView.ItemContainerStyle>
+            </ListView.ItemContainerStyle>-->
         </ListView>
         <Button  x:Name="RefreshWindowsInfoListViewButton" Content="刷新" HorizontalAlignment="Right" VerticalAlignment="Top" Width="40" Height="20" Click="RefreshWindowsInfoListViewButton_Click" Margin="0,21,25,0"/>
-
+        
         <!--<TextBlock Text="按住 Ctrl 可以多选" Margin="10,0,0,100" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="100" Height="15"></TextBlock>-->
-        <Button x:Name="StartHookButton" Content="开始" HorizontalAlignment="Left" Margin="120,0,0,100" Width="50" Height="19" VerticalAlignment="Bottom" Click="StartHookButton_Click"/>
-        <Button x:Name="StopHookButton" Content="停止" HorizontalAlignment="Left" Margin="180,0,0,100" Width="50" Height="19" VerticalAlignment="Bottom" Click="StopHookButton_Click"/>
+        <Button x:Name="StartHookButton" Content="开始" HorizontalAlignment="Left" Margin="10,0,0,70" Width="50" Height="19" VerticalAlignment="Bottom" Click="StartHookButton_Click"/>
+        <Button x:Name="StopHookButton" Content="停止" HorizontalAlignment="Left" Margin="70,0,0,70" Width="50" Height="19" VerticalAlignment="Bottom" Click="StopHookButton_Click"/>
 
-        <TextBlock Text="目标窗口句柄：" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,0,80"></TextBlock>
-        <TextBlock x:Name="TargetWindowTextBlock" Margin="90,0,10,50" TextWrapping="Wrap" Height="45" VerticalAlignment="Bottom"/>
+        <!--<RadioButton GroupName="HowToHide" Content="通过隐藏显示" IsChecked="True" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,100,70"></RadioButton>
+        <RadioButton x:Name="HideWindowByOpacityRadioButton" GroupName="HowToHide" Content="通过透明度" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,10,70"></RadioButton>-->
+
+        <TextBlock Text="目标窗口句柄：" VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="10,0,0,50"></TextBlock>
+        <TextBlock x:Name="TargetWindowTextBlock" Margin="90,0,10,50" Height="15" VerticalAlignment="Bottom"/>
 
         <Button x:Name="ShowTargetWindowButton" Content="显示目标窗口" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,25" Height="20" Click="ShowTargetWindowButton_Click"></Button>
         <TextBlock Text="显示特定窗口-输入对应句柄：" Margin="0,0,130,25" Width="160" HorizontalAlignment="Right" VerticalAlignment="Bottom" Height="18"></TextBlock>
@@ -51,7 +54,7 @@
                 <TextBlock Text="通过 Alt + P 隐藏/显示本程序的窗口"></TextBlock>
             </StatusBarItem>
             <StatusBarItem HorizontalAlignment="Right">
-                <TextBlock Text="不要过于频繁的 显示隐藏 一个窗口，容易导致崩溃"></TextBlock>
+                <TextBlock Text="程序有一定概率突然崩溃，原因暂时未知"></TextBlock>
             </StatusBarItem>
         </StatusBar>
     </Grid>

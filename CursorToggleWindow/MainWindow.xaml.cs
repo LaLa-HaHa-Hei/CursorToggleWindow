@@ -20,6 +20,11 @@ namespace CursorToggleWindow
         private const uint SW_SHOWNORMAL = 1;
         private const uint SW_SHOWMINIMIZED = 2;
         private const int WM_MOUSEMOVE = 0x0200;
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_LAYERED = 0x80000;
+        private const uint LWA_ALPHA = 0x2;
+        private const int WS_EX_APPWINDOW = 0x00040000;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
 
         private IntPtr Handle = IntPtr.Zero; // MainWindow的句柄
         private SortDescription _sortDescriptionByVisible;
@@ -126,8 +131,20 @@ namespace CursorToggleWindow
 
         private void StopHookButton_Click(object sender, RoutedEventArgs e)
         {
-            _targetWindow = null;
-            TargetWindowTextBlock.Text = "";
+            if (_isHook)
+            {
+                if (!Unhook())
+                {
+                    MessageBox.Show("卸载钩子失败");
+                    return;
+                }
+                else
+                {
+                    _isHook = false;
+                    _targetWindow = null;
+                    TargetWindowTextBlock.Text = "";
+                }
+            }
         }
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
@@ -147,16 +164,48 @@ namespace CursorToggleWindow
                                 int y = ms.pt.y;
                                 // 光标在窗口中
                                 bool isInWindow = x >= _targetWindow.Left && x <= _targetWindow.Right && y <= _targetWindow.Bottom && y >= _targetWindow.Top;
-                                if (isInWindow && !_targetWindow.Visible)
+                                if (isInWindow)
                                 {
-                                    _targetWindow.Visible = true;
-                                    //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
-                                    ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
+                                    GetWindowRect(_targetWindow.HWND, out RECT rect);
+                                    _targetWindow.Left = rect.Left;
+                                    _targetWindow.Top = rect.Top;
+                                    _targetWindow.Right = rect.Right;
+                                    _targetWindow.Bottom = rect.Bottom;
+                                    if (!_targetWindow.Visible)
+                                    {
+                                        // 显示
+                                        _targetWindow.Visible = true;
+                                        //if (HideWindowByOpacityRadioButton.IsChecked == true)
+                                        //{
+                                        //    利用修改透明度和窗口样式显示
+                                        //    SetLayeredWindowAttributes(_targetWindow.HWND, 0, 255, 0);
+                                        //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
+                                        //    SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, currentStyle.ToInt32() | ~WS_EX_TOOLWINDOW);
+                                        //}
+                                        //else
+                                        //{
+                                        //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
+                                        ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
+                                        //}
+                                    }
                                 }
                                 else if (!isInWindow && _targetWindow.Visible)
                                 {
+                                    // 隐藏
                                     _targetWindow.Visible = false;
+                                    //if (HideWindowByOpacityRadioButton.IsChecked == true)
+                                    //{
+                                    //    利用修改透明度和窗口样式隐藏
+                                    //    // 设置窗口样式为 WS_EX_LAYERED，允许窗口透明
+                                    //    //_ = SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, WS_EX_LAYERED);
+                                    //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
+                                    //    SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, currentStyle.ToInt32() | WS_EX_TOOLWINDOW | WS_EX_LAYERED);
+                                    //    SetLayeredWindowAttributes(_targetWindow.HWND, 0, 0, LWA_ALPHA);
+                                    //}
+                                    //else
+                                    //{
                                     ShowWindow(_targetWindow.HWND, SW_HIDE);
+                                    //}
                                 }
                                 break;
                         }
@@ -222,8 +271,17 @@ namespace CursorToggleWindow
                 MessageBox.Show("句柄无效，请检查");
                 return;
             }
-            ShowWindow(HWND, SW_SHOWMINIMIZED);
-            ShowWindow(HWND, SW_SHOWNORMAL);
+            //if (HideWindowByOpacityRadioButton.IsChecked == true)
+            //{
+            //    SetLayeredWindowAttributes(HWND, 0, 255, 0);
+            //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
+            //    SetWindowLong(HWND, GWL_EXSTYLE, currentStyle.ToInt32() | ~WS_EX_TOOLWINDOW);
+            //}
+            //else
+            //{
+                //ShowWindow(HWND, SW_SHOWMINIMIZED);
+                ShowWindow(HWND, SW_SHOWNORMAL);
+            //}
         }
         private bool SetHook()
         {
@@ -239,13 +297,34 @@ namespace CursorToggleWindow
                 return true;
             }
         }
+        private bool Unhook()
+        {
+            if (UnhookWindowsHookEx(_hookId))
+            {
+                _hookId = IntPtr.Zero;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
 
         private void ShowTargetWindowButton_Click(object sender, RoutedEventArgs e)
         {
             if (_targetWindow != null)
             {
-                ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
-                ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
+                //if (HideWindowByOpacityRadioButton.IsChecked == true)
+                //{
+                //    SetLayeredWindowAttributes(_targetWindow.HWND, 0, 255, 0);
+                //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
+                //    SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, currentStyle.ToInt32() | ~WS_EX_TOOLWINDOW);
+                //}
+                //else
+                //{
+                    //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
+                    ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
+                //}
             }
         }
         /// <summary>
