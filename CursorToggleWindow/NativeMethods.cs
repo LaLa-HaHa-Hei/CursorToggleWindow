@@ -39,8 +39,8 @@ namespace CursorToggleWindow
         [LibraryImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool GetWindowRect(IntPtr hWnd, out RECT rect);
-        [LibraryImport("user32.dll", SetLastError = true)]
-        public static partial int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
+        //[LibraryImport("user32.dll", SetLastError = true)]
+        //public static partial int GetWindowThreadProcessId(IntPtr hWnd, out int lpdwProcessId);
         [LibraryImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);

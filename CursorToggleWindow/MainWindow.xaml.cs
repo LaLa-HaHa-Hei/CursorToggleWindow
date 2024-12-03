@@ -18,27 +18,27 @@ namespace CursorToggleWindow
         private const int WH_MOUSE_LL = 14;
         private const uint SW_HIDE = 0;
         private const uint SW_SHOWNORMAL = 1;
-        private const uint SW_SHOWMINIMIZED = 2;
         private const int WM_MOUSEMOVE = 0x0200;
-        private const int GWL_EXSTYLE = -20;
-        private const int WS_EX_LAYERED = 0x80000;
-        private const uint LWA_ALPHA = 0x2;
-        private const int WS_EX_APPWINDOW = 0x00040000;
-        private const int WS_EX_TOOLWINDOW = 0x00000080;
+        //private const uint SW_SHOWMINIMIZED = 2;
+        //private const int GWL_EXSTYLE = -20;
+        //private const int WS_EX_LAYERED = 0x80000;
+        //private const uint LWA_ALPHA = 0x2;
+        //private const int WS_EX_APPWINDOW = 0x00040000;
+        //private const int WS_EX_TOOLWINDOW = 0x00000080;
 
         private IntPtr Handle = IntPtr.Zero; // MainWindow的句柄
         private SortDescription _sortDescriptionByVisible;
         private SortDescription _sortDescriptionByName;
-        private TargetWindowInfo? _targetWindow = null; // 需要隐藏的目标窗口信息
+        private List<TargetWindowInfo> _targetWindow = []; // 需要隐藏的目标窗口信息
         private IntPtr _hookId = IntPtr.Zero; // 鼠标钩子id
         private bool _isHook = false; // 是否安装鼠标钩子
-        private readonly object _targetWindowLock = new();
+        //private readonly object _targetWindowLock = new();
 
         public MainWindow()
         {
             InitializeComponent();
-            _sortDescriptionByVisible = new SortDescription("Visible", ListSortDirection.Descending);
-            _sortDescriptionByName = new SortDescription("Name", ListSortDirection.Ascending);
+            _sortDescriptionByVisible = new("Visible", ListSortDirection.Descending);
+            _sortDescriptionByName = new("Name", ListSortDirection.Ascending);
         }
         private void RefreshWindowsInfoListViewButton_Click(object sender, RoutedEventArgs e) => RefreshWindowListView();
         private void RefreshWindowListView()
@@ -104,26 +104,29 @@ namespace CursorToggleWindow
                 }
             }
             StringBuilder text = new();
-            if (WindowInfoListView.SelectedItem is WindowInfo windowInfo)
+            foreach (var item in WindowInfoListView.SelectedItems)
             {
-                if (GetWindowRect(windowInfo.HWND, out RECT rect))
+                if (item is WindowInfo windowInfo)
                 {
-                    TargetWindowInfo targetWindowInfo = new()
+                    if (GetWindowRect(windowInfo.HWND, out RECT rect))
                     {
-                        HWND = windowInfo.HWND,
-                        Visible = windowInfo.Visible,
-                        Left = rect.Left,
-                        Top = rect.Top,
-                        Right = rect.Right,
-                        Bottom = rect.Bottom,
-                    };
-                    _targetWindow = targetWindowInfo;
-                    text.Append(windowInfo.HWND);
-                    text.Append("; ");
-                }
-                else
-                {
-                    MessageBox.Show($"无法获取窗口“{windowInfo.Name}”的信息");
+                        TargetWindowInfo targetWindowInfo = new()
+                        {
+                            HWND = windowInfo.HWND,
+                            Visible = windowInfo.Visible,
+                            Left = rect.Left,
+                            Top = rect.Top,
+                            Right = rect.Right,
+                            Bottom = rect.Bottom,
+                        };
+                        _targetWindow.Add(targetWindowInfo);
+                        text.Append(windowInfo.HWND);
+                        text.Append("; ");
+                    }
+                    else
+                    {
+                        MessageBox.Show($"无法获取窗口“{windowInfo.Name}”的信息");
+                    }
                 }
             }
             TargetWindowTextBlock.Text = text.ToString();
@@ -141,7 +144,7 @@ namespace CursorToggleWindow
                 else
                 {
                     _isHook = false;
-                    _targetWindow = null;
+                    _targetWindow.Clear();
                     TargetWindowTextBlock.Text = "";
                 }
             }
@@ -151,64 +154,41 @@ namespace CursorToggleWindow
         {
             try
             {
-                lock (_targetWindowLock)
+                if (_targetWindow != null && nCode >= 0)
                 {
-                    if (_targetWindow != null && nCode >= 0)
+                    int msg = wParam.ToInt32();
+                    switch (msg)
                     {
-                        int msg = wParam.ToInt32();
-                        switch (msg)
-                        {
-                            case WM_MOUSEMOVE:
-                                var ms = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
-                                int x = ms.pt.x;
-                                int y = ms.pt.y;
-                                // 光标在窗口中
-                                bool isInWindow = x >= _targetWindow.Left && x <= _targetWindow.Right && y <= _targetWindow.Bottom && y >= _targetWindow.Top;
+                        case WM_MOUSEMOVE:
+                            var ms = Marshal.PtrToStructure<MSLLHOOKSTRUCT>(lParam);
+                            int x = ms.pt.x;
+                            int y = ms.pt.y;
+                            // 光标在窗口中
+                            for (int i = 0; i < _targetWindow.Count; i++)
+                            {
+                                bool isInWindow = x >= _targetWindow[i].Left && x <= _targetWindow[i].Right && y <= _targetWindow[i].Bottom && y >= _targetWindow[i].Top;
                                 if (isInWindow)
                                 {
-                                    GetWindowRect(_targetWindow.HWND, out RECT rect);
-                                    _targetWindow.Left = rect.Left;
-                                    _targetWindow.Top = rect.Top;
-                                    _targetWindow.Right = rect.Right;
-                                    _targetWindow.Bottom = rect.Bottom;
-                                    if (!_targetWindow.Visible)
+                                    GetWindowRect(_targetWindow[i].HWND, out RECT rect);
+                                    _targetWindow[i].Left = rect.Left;
+                                    _targetWindow[i].Top = rect.Top;
+                                    _targetWindow[i].Right = rect.Right;
+                                    _targetWindow[i].Bottom = rect.Bottom;
+                                    if (!_targetWindow[i].Visible)
                                     {
                                         // 显示
-                                        _targetWindow.Visible = true;
-                                        //if (HideWindowByOpacityRadioButton.IsChecked == true)
-                                        //{
-                                        //    利用修改透明度和窗口样式显示
-                                        //    SetLayeredWindowAttributes(_targetWindow.HWND, 0, 255, 0);
-                                        //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
-                                        //    SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, currentStyle.ToInt32() | ~WS_EX_TOOLWINDOW);
-                                        //}
-                                        //else
-                                        //{
-                                        //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
-                                        ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
-                                        //}
+                                        _targetWindow[i].Visible = true;
+                                        ShowWindow(_targetWindow[i].HWND, SW_SHOWNORMAL);
                                     }
                                 }
-                                else if (!isInWindow && _targetWindow.Visible)
+                                else if (!isInWindow && _targetWindow[i].Visible)
                                 {
                                     // 隐藏
-                                    _targetWindow.Visible = false;
-                                    //if (HideWindowByOpacityRadioButton.IsChecked == true)
-                                    //{
-                                    //    利用修改透明度和窗口样式隐藏
-                                    //    // 设置窗口样式为 WS_EX_LAYERED，允许窗口透明
-                                    //    //_ = SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, WS_EX_LAYERED);
-                                    //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
-                                    //    SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, currentStyle.ToInt32() | WS_EX_TOOLWINDOW | WS_EX_LAYERED);
-                                    //    SetLayeredWindowAttributes(_targetWindow.HWND, 0, 0, LWA_ALPHA);
-                                    //}
-                                    //else
-                                    //{
-                                    ShowWindow(_targetWindow.HWND, SW_HIDE);
-                                    //}
+                                    _targetWindow[i].Visible = false;
+                                    ShowWindow(_targetWindow[i].HWND, SW_HIDE);
                                 }
-                                break;
-                        }
+                            }
+                            break;
                     }
                 }
             }
@@ -271,17 +251,7 @@ namespace CursorToggleWindow
                 MessageBox.Show("句柄无效，请检查");
                 return;
             }
-            //if (HideWindowByOpacityRadioButton.IsChecked == true)
-            //{
-            //    SetLayeredWindowAttributes(HWND, 0, 255, 0);
-            //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
-            //    SetWindowLong(HWND, GWL_EXSTYLE, currentStyle.ToInt32() | ~WS_EX_TOOLWINDOW);
-            //}
-            //else
-            //{
-                //ShowWindow(HWND, SW_SHOWMINIMIZED);
-                ShowWindow(HWND, SW_SHOWNORMAL);
-            //}
+            ShowWindow(HWND, SW_SHOWNORMAL);
         }
         private bool SetHook()
         {
@@ -314,17 +284,11 @@ namespace CursorToggleWindow
         {
             if (_targetWindow != null)
             {
-                //if (HideWindowByOpacityRadioButton.IsChecked == true)
-                //{
-                //    SetLayeredWindowAttributes(_targetWindow.HWND, 0, 255, 0);
-                //    IntPtr currentStyle = GetWindowLong(_targetWindow.HWND, GWL_EXSTYLE);
-                //    SetWindowLong(_targetWindow.HWND, GWL_EXSTYLE, currentStyle.ToInt32() | ~WS_EX_TOOLWINDOW);
-                //}
-                //else
-                //{
+                for(int i  = 0; i < _targetWindow.Count; i++)
+                {
                     //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
-                    ShowWindow(_targetWindow.HWND, SW_SHOWNORMAL);
-                //}
+                    ShowWindow(_targetWindow[i].HWND, SW_SHOWNORMAL);
+                }
             }
         }
         /// <summary>

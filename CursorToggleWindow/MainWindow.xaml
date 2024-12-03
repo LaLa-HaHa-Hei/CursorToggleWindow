@@ -10,7 +10,7 @@
         <Menu>
             <MenuItem x:Name="OpenAboutWindowMenuItem" Header="关于" Click="OpenAboutWindowMenuItem_Click" Height="20"></MenuItem>
         </Menu>
-        <ListView x:Name="WindowInfoListView" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="0,20,0,95" SelectionMode="Single">
+        <ListView x:Name="WindowInfoListView" VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Standard" d:ItemsSource="{d:SampleData ItemCount=5}" Margin="0,20,0,95">
             <ListView.View>
                 <GridView>
                     <GridViewColumn Header="可视" Width="30" DisplayMemberBinding="{Binding VisibleText}"/>
@@ -34,7 +34,7 @@
         </ListView>
         <Button  x:Name="RefreshWindowsInfoListViewButton" Content="刷新" HorizontalAlignment="Right" VerticalAlignment="Top" Width="40" Height="20" Click="RefreshWindowsInfoListViewButton_Click" Margin="0,21,25,0"/>
         
-        <!--<TextBlock Text="按住 Ctrl 可以多选" Margin="10,0,0,100" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="100" Height="15"></TextBlock>-->
+        <TextBlock Text="按住 Ctrl 可以多选" Margin="0,0,10,70" HorizontalAlignment="Right" VerticalAlignment="Bottom" Width="100" Height="15"></TextBlock>
         <Button x:Name="StartHookButton" Content="开始" HorizontalAlignment="Left" Margin="10,0,0,70" Width="50" Height="19" VerticalAlignment="Bottom" Click="StartHookButton_Click"/>
         <Button x:Name="StopHookButton" Content="停止" HorizontalAlignment="Left" Margin="70,0,0,70" Width="50" Height="19" VerticalAlignment="Bottom" Click="StopHookButton_Click"/>
 
