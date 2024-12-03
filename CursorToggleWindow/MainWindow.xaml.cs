@@ -19,7 +19,7 @@ namespace CursorToggleWindow
         private const uint SW_HIDE = 0;
         private const uint SW_SHOWNORMAL = 1;
         private const int WM_MOUSEMOVE = 0x0200;
-        //private const uint SW_SHOWMINIMIZED = 2;
+        private const uint SW_SHOWMINIMIZED = 2;
         //private const int GWL_EXSTYLE = -20;
         //private const int WS_EX_LAYERED = 0x80000;
         //private const uint LWA_ALPHA = 0x2;
@@ -178,6 +178,7 @@ namespace CursorToggleWindow
                                     {
                                         // 显示
                                         _targetWindow[i].Visible = true;
+                                        //ShowWindow(_targetWindow[i].HWND, SW_SHOWMINIMIZED); // 可以在显示时置顶窗口，但是卡顿
                                         ShowWindow(_targetWindow[i].HWND, SW_SHOWNORMAL);
                                     }
                                 }
@@ -251,6 +252,7 @@ namespace CursorToggleWindow
                 MessageBox.Show("句柄无效，请检查");
                 return;
             }
+            ShowWindow(HWND, SW_SHOWMINIMIZED);
             ShowWindow(HWND, SW_SHOWNORMAL);
         }
         private bool SetHook()
@@ -286,7 +288,7 @@ namespace CursorToggleWindow
             {
                 for(int i  = 0; i < _targetWindow.Count; i++)
                 {
-                    //ShowWindow(_targetWindow.HWND, SW_SHOWMINIMIZED);
+                    ShowWindow(_targetWindow[i].HWND, SW_SHOWMINIMIZED);
                     ShowWindow(_targetWindow[i].HWND, SW_SHOWNORMAL);
                 }
             }
