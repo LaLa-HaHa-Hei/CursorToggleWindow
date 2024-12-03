@@ -7,13 +7,20 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>icon\64.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\32.ico" />
     <None Remove="Assets\QQGroup.jpg" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="icon\64.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\32.ico" />
     <Resource Include="Assets\QQGroup.jpg" />
   </ItemGroup>
 

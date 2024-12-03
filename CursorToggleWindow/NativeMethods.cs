@@ -47,13 +47,13 @@ namespace CursorToggleWindow
         [LibraryImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static partial bool UnregisterHotKey(IntPtr hWnd, int id);
-        [LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
-        public static partial int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-        [LibraryImport("user32.dll", SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.I4)]
-        public static partial bool SetLayeredWindowAttributes(IntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
-        [LibraryImport("user32.dll", SetLastError = true)]
-        public static partial IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
+        //[LibraryImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
+        //public static partial int SetWindowLong(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+        //[LibraryImport("user32.dll", SetLastError = true)]
+        //[return: MarshalAs(UnmanagedType.I4)]
+        //public static partial bool SetLayeredWindowAttributes(sIntPtr hWnd, uint crKey, byte bAlpha, uint dwFlags);
+        //[LibraryImport("user32.dll", SetLastError = true)]
+        //public static partial IntPtr GetWindowLong(IntPtr hWnd, int nIndex);
 
 
         public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
