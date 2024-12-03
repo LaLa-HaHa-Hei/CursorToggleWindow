@@ -5,9 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:CursorToggleWindow"
         mc:Ignorable="d"
-        Title="AboutWindow" Height="600" Width="400">
+        Title="关于" Height="600" Width="400">
     <Grid>
-        <TextBlock Text="如何某个窗口处于隐藏状态时本程序退出，可以在“可视”栏为“✘”的项目中找到对应窗口，将“句柄”填如程序右下角的框中按下“显示”来显示" HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" Margin="10,10,10,0"></TextBlock>
+        <TextBlock Text="如何某个窗口处于隐藏状态时本程序退出或者点了停止，可以在“可视”栏为“✘”的项目中找到对应窗口，将“句柄”填入程序右下角的框中按下“显示”来显示。欢迎加入QQ群一起讨论~" HorizontalAlignment="Left" VerticalAlignment="Top" TextWrapping="Wrap" Margin="10,10,10,0"></TextBlock>
         <Image Source=".\Assets\QQGroup.jpg" Margin="0,40,0,0"/>
     </Grid>
 </Window>
